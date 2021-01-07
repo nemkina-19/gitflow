@@ -3,10 +3,10 @@ import os
 import sys
 
 
-FPS = 100
+FPS = 60
 CONST_SPEED = 5
 GRAVITY = 0.5
-JUMP_HEIGHT = 13
+JUMP_HEIGHT = 12
 
 pygame.init()
 size = WIDTH, HEIGHT = width, height = 800, 600
@@ -118,19 +118,26 @@ class Player(pygame.sprite.Sprite):
         else:
             self.rect = self.rect.move(self.speed_x * -1, 0)
 
+        for p in flat:
+            if pygame.sprite.collide_rect(self, p):  # если есть пересечение платформы с игроком
+
+                if self.speed_y > 0:  # если падает вниз
+                    self.rect.bottom = p.rect.top  # то не падает вниз
+                    self.grounded = True  # и становится на что-то твердое
+                    self.speed_y = 0  # и энергия падения пропадает
+
+                if self.speed_y < 0:  # если движется вверх
+                    self.rect.top = p.rect.bottom  # то не движется вверх
+                    self.speed_y = 0  #
+
         self.rect = self.rect.move(0, self.speed_y)
         if pygame.sprite.spritecollide(self, flat, 0) and not self.floor:
             self.rect = self.rect.move(0, -1 * self.speed_y)
             self.speed_y = 0
-
             self.grounded = True
         else:
             self.grounded = False
             self.rect = self.rect.move(0, -1 * self.speed_y)
-
-        if self.floor:
-            self.speed_y += GRAVITY
-
 
         self.rect = self.rect.move(0, -1 * self.speed_y)
         if pygame.sprite.spritecollide(self, flat, 0):
@@ -142,7 +149,6 @@ class Player(pygame.sprite.Sprite):
 
         if self.grounded and JUMP and not self.floor:
             self.speed_y = -1 * JUMP_HEIGHT
-
 
         self.rect = self.rect.move(self.speed_x, self.speed_y)
 
