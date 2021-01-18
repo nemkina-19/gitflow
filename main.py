@@ -2,16 +2,16 @@ import pygame
 import os
 import sys
 
-
 FPS = 100
-CONST_SPEED = 4
+CONST_SPEED = 5
 GRAVITY = 0.5
 JUMP_HEIGHT = 13
 
 pygame.init()
-size = WIDTH, HEIGHT = width, height = 550, 550
+size = WIDTH, HEIGHT = width, height = 800, 600
 screen = pygame.display.set_mode(size)
 clock = pygame.time.Clock()
+
 
 def terminate():
     pygame.quit()
@@ -45,6 +45,19 @@ def start_screen():
         clock.tick(FPS)
 
 
+def load_level(filename):
+    filename = "maps/" + filename
+    # читаем уровень, убирая символы перевода строки
+    with open(filename, 'r') as mapFile:
+        level_map = [line.strip() for line in mapFile]
+
+    # и подсчитываем максимальную длину
+    max_width = max(map(len, level_map))
+
+    # дополняем каждую строку пустыми клетками ('.')
+    return list(map(lambda x: x.ljust(max_width, '.'), level_map))
+
+
 def load_image(name, colorkey=None):
     fullname = os.path.join('data', name)
     if not os.path.isfile(fullname):
@@ -61,31 +74,56 @@ def load_image(name, colorkey=None):
     return image
 
 
-class Player(pygame.sprite.Sprite):
-    image = load_image("mario.png")
+tile_images = {
+    'wall': load_image('box.png'),
+}
+# player_image = load_image('mario.png')
 
-    def __init__(self, pos):
+tile_width = tile_height = 50
+
+
+class Player(pygame.sprite.Sprite):
+    def __init__(self, sheet, columns, rows, pos):
         super().__init__(all_sprites)
-        self.image = Player.image
-        self.mask = pygame.mask.from_surface(self.image)
-        self.rect = self.image.get_rect()
+        self.frames = []
+        self.cut_sheet(sheet, columns, rows)
+        self.cur_frame = 0
+        self.image = self.frames[self.cur_frame]
         self.speed_x = 0
         self.speed_y = 0
         self.floor = False
         self.flag = False
         self.grounded = False
+        self.sheet, self.columns, self.rows = sheet, columns, rows
         self.mask = pygame.mask.from_surface(self.image)
         self.rect.x = pos[0]
         self.rect.y = pos[1]
         self.f = GRAVITY
+        self.anim = 0
+        self.right = False
+        self.left = False
+
+    def cut_sheet(self, sheet, columns, rows, x=0, y=1, f=False):
+        if not f:
+            self.rect = pygame.Rect(0, 0, (sheet.get_width() + 1) // columns,
+                                    sheet.get_height() // rows)
+        for j in range(rows):
+            for i in range(x, y):
+                frame_location = (self.rect.w * i, self.rect.h * j)
+                self.frames.append(sheet.subsurface(pygame.Rect(
+                    frame_location, self.rect.size)))
 
     def update(self):
         self.speed_y += GRAVITY
 
         if MOVE_RIGHT:
             self.speed_x = CONST_SPEED * 1
+            self.right = True
+            self.left = False
         elif MOVE_LEFT:
             self.speed_x = CONST_SPEED * -1
+            self.left = True
+            self.right = False
         elif not MOVE_RIGHT and not MOVE_LEFT:
             self.speed_x = 0
 
@@ -96,18 +134,26 @@ class Player(pygame.sprite.Sprite):
         else:
             self.rect = self.rect.move(self.speed_x * -1, 0)
 
+        for p in flat:
+            if pygame.sprite.collide_rect(self, p):  # если есть пересечение платформы с игроком
+
+                if self.speed_y > 0:  # если падает вниз
+                    self.rect.bottom = p.rect.top  # то не падает вниз
+                    self.grounded = True  # и становится на что-то твердое
+                    self.speed_y = 0  # и энергия падения пропадает
+
+                if self.speed_y < 0:  # если движется вверх
+                    self.rect.top = p.rect.bottom  # то не движется вверх
+                    self.speed_y = 0  #
+
         self.rect = self.rect.move(0, self.speed_y)
         if pygame.sprite.spritecollide(self, flat, 0) and not self.floor:
             self.rect = self.rect.move(0, -1 * self.speed_y)
             self.speed_y = 0
-
             self.grounded = True
         else:
             self.grounded = False
             self.rect = self.rect.move(0, -1 * self.speed_y)
-
-        if self.floor:
-            self.speed_y += GRAVITY
 
         self.rect = self.rect.move(0, -1 * self.speed_y)
         if pygame.sprite.spritecollide(self, flat, 0):
@@ -115,6 +161,7 @@ class Player(pygame.sprite.Sprite):
             self.floor = True
         else:
             self.floor = False
+
             self.rect = self.rect.move(0, self.speed_y)
 
         if self.grounded and JUMP and not self.floor:
@@ -122,28 +169,94 @@ class Player(pygame.sprite.Sprite):
 
         self.rect = self.rect.move(self.speed_x, self.speed_y)
 
+        self.anim += 1
+        if self.anim % 5 == 0:
+            if not self.grounded and JUMP:
+                if len(self.frames) < 8:
+                    self.frames = []
+                self.cut_sheet(self.sheet, self.columns, self.rows, 6, 7, True)
+                self.cur_frame = (self.cur_frame + 1) % len(self.frames)
+                self.image = self.frames[self.cur_frame]
+                self.image = pygame.transform.flip(self.image, 0, 0)
+                if self.left:
+                    self.image = pygame.transform.flip(self.image, 1, 0)
+                if self.right:
+                    self.image = pygame.transform.flip(self.image, 0, 0)
+            else:
+                if self.speed_x == 0:
+                    if len(self.frames) > 1:
+                        self.frames = []
+                    self.cut_sheet(self.sheet, self.columns, self.rows, 0, 1, True)
+                    self.cur_frame = (self.cur_frame + 1) % len(self.frames)
+                    self.image = self.frames[self.cur_frame]
+                    if self.left:
+                        self.image = pygame.transform.flip(self.image, 1, 0)
+                    if self.right:
+                        self.image = pygame.transform.flip(self.image, 0, 0)
+                if self.speed_x < 0:
+                    if len(self.frames) == 1:
+                        self.frames = []
+                    self.cut_sheet(self.sheet, self.columns, self.rows, 2, 4, True)
+                    self.cur_frame = (self.cur_frame + 1) % len(self.frames)
+                    self.image = self.frames[self.cur_frame]
+                    self.image = pygame.transform.flip(self.image, 1, 0)
+                if self.speed_x > 0:
+                    if len(self.frames) == 1:
+                        self.frames = []
+                    self.cut_sheet(self.sheet, self.columns, self.rows, 2, 4, True)
+                    self.cur_frame = (self.cur_frame + 1) % len(self.frames)
+                    self.image = self.frames[self.cur_frame]
+                    self.image = pygame.transform.flip(self.image, 0, 0)
 
-class Mountain(pygame.sprite.Sprite):
-    image = load_image("flat.png")
 
-    def __init__(self, pos):
-        super().__init__(all_sprites)
-        self.mask = pygame.mask.from_surface(self.image)
-        self.image = Mountain.image
-        self.rect = self.image.get_rect()
+class Tile(pygame.sprite.Sprite):
+    def __init__(self, tile_type, pos_x, pos_y):
+        super().__init__(tiles_group, all_sprites)
+        self.image = tile_images[tile_type]
+        self.rect = self.image.get_rect().move(
+            tile_width * pos_x, tile_height * pos_y)
         self.add(flat)
-        self.mask = pygame.mask.from_surface(self.image)
-        self.rect.x = pos[0]
-        self.rect.y = pos[1]
+
+
+class Camera:
+    def __init__(self):
+        self.dx = 0
+        self.dy = 0
+
+        # сдвинуть объект obj на смещение камеры
+
+    def apply(self, obj):
+        obj.rect.x += self.dx
+        obj.rect.y += self.dy
+
+        # позиционировать камеру на объекте target
+
+    def update(self, target):
+        self.dx = -(target.rect.x + target.rect.w // 2 - width // 2)
+        self.dy = -(target.rect.y + target.rect.h // 2 - height // 2)
+
+
+def generate_level(level):
+    new_player, x, y = None, None, None
+    for y in range(len(level)):
+        for x in range(len(level[y])):
+            if level[y][x] == '*':
+                Tile('wall', x, y)
+            elif level[y][x] == '@':
+                new_player = Player(load_image("mario.png"), 20, 1, (tile_width * x, tile_width * y))
+    # вернем игрока, а также размер поля в клетках
+    return new_player, x, y
 
 
 flat = pygame.sprite.Group()
 
+tiles_group = pygame.sprite.Group()
+player_group = pygame.sprite.Group()
 all_sprites = pygame.sprite.Group()
-mountain = Mountain((300, 200))
-mountain2 = Mountain((200, 350))
-mountain3 = Mountain((0, 500))
 
+player = None
+
+start_screen()
 
 running = True
 exist = False
@@ -152,8 +265,8 @@ flag = False
 JUMP = False
 MOVE_LEFT = False
 MOVE_RIGHT = False
-
-start_screen()
+camera = Camera()
+player, level_x, level_y = generate_level(load_level('map.txt'))
 
 while running:
     clock.tick(FPS)
@@ -179,10 +292,15 @@ while running:
                 MOVE_LEFT = False
             if event.key == pygame.K_UP:
                 JUMP = False
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            if event.button == 1 and not exist:
-                Player(event.pos)
-                exist = True
+        # if event.type == pygame.MOUSEBUTTONDOWN:
+        #  if event.button == 1 and not exist:
+        # Player((100, 80))
+        # exist = True
+    # изменяем ракурс камеры
+    camera.update(player)
+    # обновляем положение всех спрайтов
+    for sprite in all_sprites:
+        camera.apply(sprite)
     screen.fill(pygame.Color("black"))
     all_sprites.draw(screen)
     pygame.display.flip()

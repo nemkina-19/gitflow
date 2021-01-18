@@ -2,7 +2,6 @@ import pygame
 import os
 import sys
 
-
 FPS = 60
 CONST_SPEED = 5
 GRAVITY = 0.5
@@ -78,7 +77,7 @@ def load_image(name, colorkey=None):
 tile_images = {
     'wall': load_image('box.png'),
 }
-#player_image = load_image('mario.png')
+# player_image = load_image('mario.png')
 
 tile_width = tile_height = 50
 
@@ -187,7 +186,7 @@ def generate_level(level):
             if level[y][x] == '*':
                 Tile('wall', x, y)
             elif level[y][x] == '@':
-                new_player = Player((x, y))
+                new_player = Player((tile_width * x, tile_width * y))
     # вернем игрока, а также размер поля в клетках
     return new_player, x, y
 
@@ -236,10 +235,10 @@ while running:
                 MOVE_LEFT = False
             if event.key == pygame.K_UP:
                 JUMP = False
-        #if event.type == pygame.MOUSEBUTTONDOWN:
-          #  if event.button == 1 and not exist:
-               # Player((100, 80))
-               # exist = True
+        # if event.type == pygame.MOUSEBUTTONDOWN:
+        #  if event.button == 1 and not exist:
+        # Player((100, 80))
+        # exist = True
     # изменяем ракурс камеры
     camera.update(player)
     # обновляем положение всех спрайтов
