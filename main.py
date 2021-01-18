@@ -2,7 +2,7 @@ import pygame
 import os
 import sys
 
-FPS = 100
+FPS = 90
 CONST_SPEED = 5
 GRAVITY = 0.5
 JUMP_HEIGHT = 13
@@ -135,16 +135,16 @@ class Player(pygame.sprite.Sprite):
             self.rect = self.rect.move(self.speed_x * -1, 0)
 
         for p in flat:
-            if pygame.sprite.collide_rect(self, p):  # если есть пересечение платформы с игроком
+            if pygame.sprite.collide_rect(self, p):
 
-                if self.speed_y > 0:  # если падает вниз
-                    self.rect.bottom = p.rect.top  # то не падает вниз
-                    self.grounded = True  # и становится на что-то твердое
-                    self.speed_y = 0  # и энергия падения пропадает
+                if self.speed_y > 0:
+                    self.rect.bottom = p.rect.top
+                    self.grounded = True
+                    self.speed_y = 0
 
-                if self.speed_y < 0:  # если движется вверх
-                    self.rect.top = p.rect.bottom  # то не движется вверх
-                    self.speed_y = 0  #
+                if self.speed_y < 0:
+                    self.rect.top = p.rect.bottom
+                    self.speed_y = 0
 
         self.rect = self.rect.move(0, self.speed_y)
         if pygame.sprite.spritecollide(self, flat, 0) and not self.floor:
@@ -170,18 +170,21 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.rect.move(self.speed_x, self.speed_y)
 
         self.anim += 1
-        if self.anim % 5 == 0:
-            if not self.grounded and JUMP:
-                if len(self.frames) < 8:
-                    self.frames = []
-                self.cut_sheet(self.sheet, self.columns, self.rows, 6, 7, True)
-                self.cur_frame = (self.cur_frame + 1) % len(self.frames)
-                self.image = self.frames[self.cur_frame]
+        if abs(self.speed_y) > 1 and not self.grounded:
+            if len(self.frames) < 2:
+                self.frames = []
+            self.cut_sheet(self.sheet, self.columns, self.rows, 6, 7, True)
+            self.cur_frame = (self.cur_frame + 1) % len(self.frames)
+            self.image = self.frames[self.cur_frame]
+            self.image = pygame.transform.flip(self.image, 0, 0)
+            if self.left:
+                self.image = pygame.transform.flip(self.image, 1, 0)
+            if self.right:
                 self.image = pygame.transform.flip(self.image, 0, 0)
-                if self.left:
-                    self.image = pygame.transform.flip(self.image, 1, 0)
-                if self.right:
-                    self.image = pygame.transform.flip(self.image, 0, 0)
+
+        if self.anim % 10 == 0:
+            if abs(self.speed_y) > 0.5 and not self.grounded:
+                pass
             else:
                 if self.speed_x == 0:
                     if len(self.frames) > 1:
