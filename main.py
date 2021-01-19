@@ -19,7 +19,7 @@ def terminate():
 
 
 def start_screen():
-    intro_text = ["ЗАСТАВКА"]
+    intro_text = [""]
 
     fon = pygame.transform.scale(load_image('fon.jpg'), (WIDTH, HEIGHT))
     screen.blit(fon, (0, 0))
