@@ -102,6 +102,7 @@ class Player(pygame.sprite.Sprite):
         self.anim = 0
         self.right = False
         self.left = False
+        self.jump = False
 
     def cut_sheet(self, sheet, columns, rows, x=0, y=1, f=False):
         if not f:
@@ -114,8 +115,8 @@ class Player(pygame.sprite.Sprite):
                     frame_location, self.rect.size)))
 
     def update(self):
-        self.speed_y += GRAVITY
-
+        if not self.grounded:
+            self.speed_y += GRAVITY
         if MOVE_RIGHT:
             self.speed_x = CONST_SPEED * 1
             self.right = True
@@ -126,90 +127,69 @@ class Player(pygame.sprite.Sprite):
             self.right = False
         elif not MOVE_RIGHT and not MOVE_LEFT:
             self.speed_x = 0
-
-        self.rect = self.rect.move(self.speed_x, 0)
-        if pygame.sprite.spritecollide(self, flat, 0):
-            self.rect = self.rect.move(self.speed_x * -1, 0)
-            self.speed_x = 0
-        else:
-            self.rect = self.rect.move(self.speed_x * -1, 0)
-
-        for p in flat:
-            if pygame.sprite.collide_rect(self, p):
-
-                if self.speed_y > 0:
-                    self.rect.bottom = p.rect.top
-                    self.grounded = True
-                    self.speed_y = 0
-
-                if self.speed_y < 0:
-                    self.rect.top = p.rect.bottom
-                    self.speed_y = 0
-
-        self.rect = self.rect.move(0, self.speed_y)
-        if pygame.sprite.spritecollide(self, flat, 0) and not self.floor:
-            self.rect = self.rect.move(0, -1 * self.speed_y)
-            self.speed_y = 0
-            self.grounded = True
-        else:
-            self.grounded = False
-            self.rect = self.rect.move(0, -1 * self.speed_y)
-
-        self.rect = self.rect.move(0, -1 * self.speed_y)
-        if pygame.sprite.spritecollide(self, flat, 0):
-            self.rect = self.rect.move(0, self.speed_y)
-            self.floor = True
-        else:
-            self.floor = False
-
-            self.rect = self.rect.move(0, self.speed_y)
-
-        if self.grounded and JUMP and not self.floor:
+        if self.grounded and JUMP:
             self.speed_y = -1 * JUMP_HEIGHT
 
-        self.rect = self.rect.move(self.speed_x, self.speed_y)
+        # коллизия
+        self.grounded = False
+        self.rect = self.rect.move(self.speed_x, 0)
+        self.isCollide(self.speed_x, 0, flat)
+        self.rect = self.rect.move(0, self.speed_y)
+        self.isCollide(0, self.speed_y, flat)
 
+        # счётчик анимаций
         self.anim += 1
-        if abs(self.speed_y) > 1 and not self.grounded:
-            if len(self.frames) < 2:
-                self.frames = []
-            self.cut_sheet(self.sheet, self.columns, self.rows, 6, 7, True)
+        if self.anim % 1000 == 0:
+            self.anim //= 1000
+
+        # различные анимации в зависимости от действий
+        if self.speed_y < -1:
+            self.animate('jump')
+        elif self.speed_y > 1:
+            self.animate('down')
+        elif self.speed_x == 0:
+            self.animate('0x')
+        elif self.speed_x < 0:
+            self.animate('-1x')
+        elif self.speed_x > 0:
+            self.animate('1x')
+
+        # воспроизводим анимации
+        if self.anim % 10 == 0:
             self.cur_frame = (self.cur_frame + 1) % len(self.frames)
             self.image = self.frames[self.cur_frame]
-            self.image = pygame.transform.flip(self.image, 0, 0)
             if self.left:
                 self.image = pygame.transform.flip(self.image, 1, 0)
-            if self.right:
+            elif self.right:
                 self.image = pygame.transform.flip(self.image, 0, 0)
 
-        if self.anim % 10 == 0:
-            if abs(self.speed_y) > 0.5 and not self.grounded:
-                pass
-            else:
-                if self.speed_x == 0:
-                    if len(self.frames) > 1:
-                        self.frames = []
-                    self.cut_sheet(self.sheet, self.columns, self.rows, 0, 1, True)
-                    self.cur_frame = (self.cur_frame + 1) % len(self.frames)
-                    self.image = self.frames[self.cur_frame]
-                    if self.left:
-                        self.image = pygame.transform.flip(self.image, 1, 0)
-                    if self.right:
-                        self.image = pygame.transform.flip(self.image, 0, 0)
-                if self.speed_x < 0:
-                    if len(self.frames) == 1:
-                        self.frames = []
-                    self.cut_sheet(self.sheet, self.columns, self.rows, 2, 4, True)
-                    self.cur_frame = (self.cur_frame + 1) % len(self.frames)
-                    self.image = self.frames[self.cur_frame]
-                    self.image = pygame.transform.flip(self.image, 1, 0)
-                if self.speed_x > 0:
-                    if len(self.frames) == 1:
-                        self.frames = []
-                    self.cut_sheet(self.sheet, self.columns, self.rows, 2, 4, True)
-                    self.cur_frame = (self.cur_frame + 1) % len(self.frames)
-                    self.image = self.frames[self.cur_frame]
-                    self.image = pygame.transform.flip(self.image, 0, 0)
+    def animate(self, animation):
+        self.frames = []
+        if animation == '0x':
+            self.cut_sheet(self.sheet, self.columns, self.rows, 0, 1, True)
+        elif animation == 'down':
+            self.cut_sheet(self.sheet, self.columns, self.rows, 15, 18, True)
+        elif animation == '-1x':
+            self.cut_sheet(self.sheet, self.columns, self.rows, 2, 4, True)
+        elif animation == '1x':
+            self.cut_sheet(self.sheet, self.columns, self.rows, 2, 4, True)
+        elif animation == 'jump':
+            self.cut_sheet(self.sheet, self.columns, self.rows, 6, 7, True)
+
+    def isCollide(self, sx, sy, p):
+        for f in p:
+            if pygame.sprite.collide_rect(self, f):
+                if sy > 0:
+                    self.rect.bottom = f.rect.top
+                    self.grounded = True
+                    self.speed_y = 0
+                if sy < 0:
+                    self.rect.top = f.rect.bottom
+                    self.speed_y = 0
+                if sx > 0:
+                    self.rect.right = f.rect.left
+                if sx < 0:
+                    self.rect.left = f.rect.right
 
 
 class Tile(pygame.sprite.Sprite):
