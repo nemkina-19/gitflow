@@ -6,8 +6,11 @@ FPS = 200
 CONST_SPEED = 5
 GRAVITY = 0.5
 JUMP_HEIGHT = 13
-
+pygame.mixer.pre_init(44100, -16, 1, 512)
 pygame.init()
+RED = (255, 0, 0)
+YELLOW = (239, 228, 176)
+
 size = WIDTH, HEIGHT = width, height = 800, 600
 screen = pygame.display.set_mode(size)
 
@@ -20,14 +23,14 @@ def terminate():
 
 
 def start_screen():
-    intro_text = ["ЗАСТАВКА"]
+    intro_text = ["Press any button to continuie"]
 
     fon = pygame.transform.scale(load_image('fon.jpg'), (WIDTH, HEIGHT))
     screen.blit(fon, (0, 0))
-    font = pygame.font.Font(None, 30)
+    font = pygame.font.SysFont('arial', 30)
     text_coord = 50
     for line in intro_text:
-        string_rendered = font.render(line, 1, pygame.Color('black'))
+        string_rendered = font.render(line, 1, RED, YELLOW)
         intro_rect = string_rendered.get_rect()
         text_coord += 10
         intro_rect.top = text_coord
@@ -35,12 +38,17 @@ def start_screen():
         text_coord += intro_rect.height
         screen.blit(string_rendered, intro_rect)
 
+        pygame.mixer.music.load('music/start.ogg')
+        pygame.mixer.music.set_volume(0.5)
+        pygame.mixer.music.play(-1)
+
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
             elif event.type == pygame.KEYDOWN or \
                     event.type == pygame.MOUSEBUTTONDOWN:
+                pygame.mixer.music.stop()
                 return  # начинаем игру
         pygame.display.flip()
         clock.tick(FPS)
@@ -243,7 +251,6 @@ def generate_level(level):
 
 
 flat = pygame.sprite.Group()
-
 tiles_group = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
 all_sprites = pygame.sprite.Group()
@@ -262,6 +269,15 @@ MOVE_RIGHT = False
 camera = Camera()
 player, level_x, level_y = generate_level(load_level('map_1.txt'))
 
+# Music
+volue = 0.5
+pygame.mixer.music.load('music/joy.ogg')
+pygame.mixer.music.play(-1)
+pygame.mixer.music.set_volume(volue)
+jump = pygame.mixer.Sound('music/jump_3.ogg')
+jump.set_volume(volue - 0.2)
+
+
 while running:
     clock.tick(FPS)
     all_sprites.update()
@@ -275,8 +291,21 @@ while running:
                 MOVE_LEFT = True
             if event.key == pygame.K_UP:
                 JUMP = True
+                jump.play(loops=0)
             if event.key == pygame.K_LCTRL:
                 flag = True
+            if event.key == pygame.K_F3:
+                if volue > 0.3:
+                    volue -= 0.1
+                    pygame.mixer.music.set_volume(volue)
+                    jump.set_volume(volue - 0.1)
+                    print(volue)
+            if event.key == pygame.K_F4:
+                if volue <= 1.0:
+                    volue += 0.1
+                    pygame.mixer.music.set_volume(volue)
+                    jump.set_volume(volue - 0.1)
+                    print(volue)
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_LCTRL:
                 flag = False
