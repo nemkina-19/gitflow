@@ -4,6 +4,7 @@ import sys
 
 FPS = 200
 CONST_SPEED = 5
+COINS = 0
 GRAVITY = 0.5
 JUMP_HEIGHT = 13
 pygame.mixer.pre_init(44100, -16, 1, 512)
@@ -89,8 +90,23 @@ tile_images = {
     'ground': pygame.transform.scale(load_image('grassCenter.png'), (tile_width, tile_height)),
     'bridge': pygame.transform.scale(load_image('boxAlt.png'), (tile_width, tile_height)),
     'grass': pygame.transform.scale(load_image('grass.png'), (tile_width, tile_height)),
-    'ground_stay': pygame.transform.scale(load_image('grassCenter.png'), (tile_width, tile_height))
+    'ground_stay': pygame.transform.scale(load_image('grassCenter.png'), (tile_width, tile_height)),
+    'coin': pygame.transform.scale(load_image('coin.png'), (tile_width, tile_height))
 }
+
+
+class Output:
+    def __init__(self, screen, x, y, xs, ys):
+        self.x = x
+        self.y = y
+        self.btn_size_x = xs
+        self.btn_size_y = ys
+        self.screen = screen
+
+    def draw(self):
+        font = pygame.font.Font(None, 40)
+        text1 = font.render(f'Счёт: {COINS}', True, (255, 215, 0))
+        screen.blit(text1, (self.x + 10, self.y + self.btn_size_y // 4))
 
 
 class Player(pygame.sprite.Sprite):
@@ -173,6 +189,14 @@ class Player(pygame.sprite.Sprite):
             elif self.right:
                 self.image = pygame.transform.flip(self.image, 0, 0)
 
+        for i in coin_group:
+            if pygame.sprite.collide_rect(self, i):
+                i.kill()
+                global COINS
+                COINS += 1
+                coin.play(loops=0)
+
+
     def animate(self, animation):
         self.frames = []
         if animation == '0x':
@@ -210,6 +234,8 @@ class Tile(pygame.sprite.Sprite):
             tile_width * pos_x, tile_height * pos_y)
         if tile_type == 'bridge' or tile_type == 'grass' or tile_type == 'ground_stay':
             self.add(flat)
+        if tile_type == 'coin':
+            self.add(coin_group)
 
 
 class Camera:
@@ -242,6 +268,8 @@ def generate_level(level):
                 Tile('bridge', x, y)
             elif level[y][x] == '*':
                 Tile('grass', x, y)
+            elif level[y][x] == '$':
+                Tile('coin', x, y)
             elif level[y][x] == '@':
                 new_player = Player(load_image("mario.png"), 20, 1, (tile_width * x, tile_width * y))
 
@@ -249,6 +277,7 @@ def generate_level(level):
     return new_player, x, y
 
 
+coin_group = pygame.sprite.Group()
 flat = pygame.sprite.Group()
 tiles_group = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
@@ -269,12 +298,16 @@ camera = Camera()
 player, level_x, level_y = generate_level(load_level('map_1.txt'))
 
 # Music
-volue = 0.5
+volue = 0.3
 pygame.mixer.music.load('music/joy.ogg')
 pygame.mixer.music.play(-1)
 pygame.mixer.music.set_volume(volue)
 jump = pygame.mixer.Sound('music/jump_3.ogg')
-jump.set_volume(volue - 0.2)
+jump.set_volume(volue / 4)
+coin = pygame.mixer.Sound('music/coin.mp3')
+coin.set_volume(volue)
+
+total = Output(screen, 0, 0, 20, 20)
 
 
 while running:
@@ -323,6 +356,7 @@ while running:
         camera.apply(sprite)
     screen.fill(pygame.Color(26, 21, 63))
     all_sprites.draw(screen)
+    total.draw()
     pygame.display.flip()
 
 pygame.quit()
