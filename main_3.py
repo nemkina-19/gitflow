@@ -148,7 +148,6 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.rect.move(0, self.speed_y)
         self.isCollide(0, self.speed_y, flat)
 
-        # счётчик анимаций
         self.anim += 1
         if self.anim % 1000 == 0:
             self.anim //= 1000
