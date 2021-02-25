@@ -1,21 +1,39 @@
 import pygame
 import os
 import sys
+import ctypes
+
 
 FPS = 200
 CONST_SPEED = 5
-COINS = 0
 GRAVITY = 0.5
 JUMP_HEIGHT = 13
+COINS = 0
+
 pygame.mixer.pre_init(44100, -16, 1, 512)
 pygame.init()
+
 RED = (255, 0, 0)
 YELLOW = (239, 228, 176)
+BLACK = (0, 0, 0)
+BLUE = (0, 0, 255)
 
-size = WIDTH, HEIGHT = width, height = 800, 600
-screen = pygame.display.set_mode(size)
+#size = WIDTH, HEIGHT = width, height = 800, 600
 
+
+def size_screen():
+    user32 = ctypes.windll.user32
+    screenSize = user32.GetSystemMetrics(0), user32.GetSystemMetrics(1)
+    size = screenSize
+    return size
+
+
+size_full = size_screen()
+WIDTH, HEIGHT = size_full
+screen = pygame.display.set_mode((size_full), pygame.FULLSCREEN)
+width, height = WIDTH, HEIGHT
 clock = pygame.time.Clock()
+print(WIDTH, HEIGHT)
 
 
 def terminate():
@@ -23,13 +41,32 @@ def terminate():
     sys.exit()
 
 
-def start_screen():
-    intro_text = ["Press any button to continuie"]
+def draw(screen, x, y, btn_size_x, btn_size_y, text='', color=None, options=False):
+    font = pygame.font.SysFont('arial', 25)
+    text1 = font.render(text, 1, BLACK)
+    if text == '':
+        pygame.draw.rect(screen, (0, 0, 0), (x, y, btn_size_x, btn_size_y))
+    if options:
+        pygame.draw.rect(screen, color, (x, y, btn_size_x, btn_size_y))
+        screen.blit(text1, (x + 10, y + btn_size_y // 4))
 
-    fon = pygame.transform.scale(load_image('fon.jpg'), (WIDTH, HEIGHT))
+
+def start_screen():
+    intro_text = [""]
+
+    fon = pygame.transform.scale(load_image('fon.png'), (WIDTH, HEIGHT))
     screen.blit(fon, (0, 0))
     font = pygame.font.SysFont('arial', 30)
     text_coord = 50
+
+    # Buttons
+    btn_1x = 0.75 * WIDTH
+    btn_1y = HEIGHT * 0.2
+    btn_size_x = WIDTH * 0.125
+    btn_size_y = HEIGHT * 0.1
+    btn_2x = 0.125 * WIDTH
+    btn_2y = HEIGHT * 0.2
+
     for line in intro_text:
         string_rendered = font.render(line, 1, RED, YELLOW)
         intro_rect = string_rendered.get_rect()
@@ -39,18 +76,29 @@ def start_screen():
         text_coord += intro_rect.height
         screen.blit(string_rendered, intro_rect)
 
-        pygame.mixer.music.load('music/start.ogg')
-        pygame.mixer.music.set_volume(0.5)
-        pygame.mixer.music.play(-1)
+    draw(screen, btn_1x, btn_1y,
+         btn_size_x, btn_size_y, '', BLUE)
+    draw(screen, btn_2x, btn_2y,
+         btn_size_x, btn_size_y, '', RED)
+    draw(screen, btn_1x + 10, btn_1y + 10, btn_size_x - 20,
+         btn_size_y - 20, '       PLAY      ', BLUE, True)
+    draw(screen, btn_2x + 10, btn_2y + 10, btn_size_x - 20,
+         btn_size_y - 20, '       QUIT      ', RED, True)
+    pygame.mixer.music.load('music/start.ogg')
+    pygame.mixer.music.set_volume(0.5)
+    pygame.mixer.music.play(-1)
 
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
-            elif event.type == pygame.KEYDOWN or \
-                    event.type == pygame.MOUSEBUTTONDOWN:
-                pygame.mixer.music.stop()
-                return  # начинаем игру
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if btn_1x <= event.pos[0] <= btn_1x + btn_size_x and btn_1y <= event.pos[1] <= btn_1y + btn_size_y:
+                    pygame.mixer.music.stop()
+                    return  # начинаем игру
+                elif btn_2x <= event.pos[0] <= btn_2x + btn_size_x and btn_2y <= event.pos[1] <= btn_2y + btn_size_y:
+                    terminate()
+
         pygame.display.flip()
         clock.tick(FPS)
 
@@ -317,6 +365,8 @@ while running:
         if event.type == pygame.QUIT:
             running = False
         if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                running = False
             if event.key == pygame.K_RIGHT:
                 MOVE_RIGHT = True
             if event.key == pygame.K_LEFT:
