@@ -4,7 +4,7 @@ import sys
 import ctypes
 
 
-FPS = 250
+FPS = 50
 CONST_SPEED = 5
 GRAVITY = 0.5
 JUMP_HEIGHT = 13
@@ -103,6 +103,26 @@ def start_screen():
         clock.tick(FPS)
 
 
+def finish_screen():
+    fon = pygame.transform.scale(load_image('game_over.jpg'), (WIDTH, HEIGHT))
+    screen.blit(fon, (0, 0))
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                terminate()
+                #if btn_1x <= event.pos[0] <= btn_1x + btn_size_x and btn_1y <= event.pos[1] <= btn_1y + btn_size_y:
+                    #pygame.mixer.music.stop()
+                    #return  # начинаем игру
+                #elif btn_2x <= event.pos[0] <= btn_2x + btn_size_x and btn_2y <= event.pos[1] <= btn_2y + btn_size_y:
+                    #terminate()
+
+        pygame.display.flip()
+        clock.tick(FPS)
+
+
 def load_level(filename):
     filename = "maps/" + filename
     # читаем уровень, убирая символы перевода строки
@@ -139,7 +159,8 @@ tile_images = {
     'bridge': pygame.transform.scale(load_image('boxAlt.png'), (tile_width, tile_height)),
     'grass': pygame.transform.scale(load_image('grass.png'), (tile_width, tile_height)),
     'ground_stay': pygame.transform.scale(load_image('grassCenter.png'), (tile_width, tile_height)),
-    'coin': pygame.transform.scale(load_image('coin.png'), (tile_width, tile_height))
+    'coin': pygame.transform.scale(load_image('coin.png'), (tile_width, tile_height)),
+    'spikes': pygame.transform.scale(load_image('spikes.png'), (tile_width, tile_height))
 }
 
 
@@ -244,6 +265,10 @@ class Player(pygame.sprite.Sprite):
                 COINS += 1
                 coin.play(loops=0)
 
+        for i in spikes_group:
+            if pygame.sprite.collide_rect(self, i):
+                finish_screen()
+
     # Анимация
     def animate(self, animation):
         self.frames = []
@@ -284,6 +309,8 @@ class Tile(pygame.sprite.Sprite):
             self.add(flat)
         if tile_type == 'coin':
             self.add(coin_group)
+        if tile_type == 'spikes':
+            self.add(spikes_group)
 
 
 class Camera:
@@ -318,6 +345,8 @@ def generate_level(level):
                 Tile('grass', x, y)
             elif level[y][x] == '$':
                 Tile('coin', x, y)
+            elif level[y][x] == '!':
+                Tile('spikes', x, y)
             elif level[y][x] == '@':
                 new_player = Player(load_image("mario.png"), 20, 1, (tile_width * x, tile_width * y))
 
@@ -330,6 +359,7 @@ flat = pygame.sprite.Group()
 tiles_group = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
 all_sprites = pygame.sprite.Group()
+spikes_group = pygame.sprite.Group()
 
 player = None
 
