@@ -4,7 +4,7 @@ import sys
 import ctypes
 
 
-FPS = 200
+FPS = 250
 CONST_SPEED = 5
 GRAVITY = 0.5
 JUMP_HEIGHT = 13
@@ -244,7 +244,7 @@ class Player(pygame.sprite.Sprite):
                 COINS += 1
                 coin.play(loops=0)
 
-
+    # Анимация
     def animate(self, animation):
         self.frames = []
         if animation == '0x':
