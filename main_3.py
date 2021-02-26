@@ -14,11 +14,10 @@ pygame.mixer.pre_init(44100, -16, 1, 512)
 pygame.init()
 
 RED = (255, 0, 0)
-YELLOW = (239, 228, 176)
+YELLOW = (255, 215, 0)
 BLACK = (0, 0, 0)
 BLUE = (0, 0, 255)
-
-#size = WIDTH, HEIGHT = width, height = 800, 600
+GREEN = (0, 255, 0)
 
 
 def size_screen():
@@ -104,20 +103,98 @@ def start_screen():
 
 
 def finish_screen():
-    fon = pygame.transform.scale(load_image('game_over.jpg'), (WIDTH, HEIGHT))
+    fon = pygame.transform.scale(load_image('win.jpg'), (WIDTH, HEIGHT))
     screen.blit(fon, (0, 0))
+
+    end.play(loops=0)
+
+    intro_text = [f"Вы собрали {COINS} из 15 монет!"]
+    font = pygame.font.SysFont('arial', 30)
+    text_coord = 150
+    for line in intro_text:
+        string_rendered = font.render(line, 1, RED)
+        intro_rect = string_rendered.get_rect()
+        text_coord += 10
+        intro_rect.top = text_coord
+        intro_rect.x = 10
+        text_coord += intro_rect.height
+        screen.blit(string_rendered, intro_rect)
+
+    btn_1x = 0.6 * WIDTH
+    btn_1y = HEIGHT * 0.4
+    btn_size_x = WIDTH * 0.125
+    btn_size_y = HEIGHT * 0.1
+    btn_2x = 0.3 * WIDTH
+    btn_2y = HEIGHT * 0.4
+
+    draw(screen, btn_1x, btn_1y,
+         btn_size_x, btn_size_y, '', BLUE)
+    draw(screen, btn_2x, btn_2y,
+         btn_size_x, btn_size_y, '', RED)
+    draw(screen, btn_1x + 10, btn_1y + 10, btn_size_x - 20,
+         btn_size_y - 20, ' PLAY AGAIN    ', GREEN, True)
+    draw(screen, btn_2x + 10, btn_2y + 10, btn_size_x - 20,
+         btn_size_y - 20, '       QUIT      ', RED, True)
 
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
             elif event.type == pygame.MOUSEBUTTONDOWN:
+                if btn_1x <= event.pos[0] <= btn_1x + btn_size_x and btn_1y <= event.pos[1] <= btn_1y + btn_size_y:
+                    # pygame.mixer.music.stop()
+                    return  # начинаем игру
+                elif btn_2x <= event.pos[0] <= btn_2x + btn_size_x and btn_2y <= event.pos[1] <= btn_2y + btn_size_y:
+                    terminate()
+
+        pygame.display.flip()
+        clock.tick(FPS)
+
+
+def dead_screen():
+    fon = pygame.transform.scale(load_image('game_over.jpg'), (WIDTH, HEIGHT))
+    screen.blit(fon, (0, 0))
+
+    lose.play(loops=0)
+
+    intro_text = [f"Вы собрали {COINS} из 15 монет!"]
+    font = pygame.font.SysFont('arial', 30)
+    text_coord = 150
+    for line in intro_text:
+        string_rendered = font.render(line, 1, RED)
+        intro_rect = string_rendered.get_rect()
+        text_coord += 10
+        intro_rect.top = text_coord
+        intro_rect.x = 10
+        text_coord += intro_rect.height
+        screen.blit(string_rendered, intro_rect)
+
+    btn_1x = 0.6 * WIDTH
+    btn_1y = HEIGHT * 0.4
+    btn_size_x = WIDTH * 0.125
+    btn_size_y = HEIGHT * 0.1
+    btn_2x = 0.3 * WIDTH
+    btn_2y = HEIGHT * 0.4
+
+    draw(screen, btn_1x, btn_1y,
+         btn_size_x, btn_size_y, '', BLUE)
+    draw(screen, btn_2x, btn_2y,
+         btn_size_x, btn_size_y, '', RED)
+    draw(screen, btn_1x + 10, btn_1y + 10, btn_size_x - 20,
+         btn_size_y - 20, ' PLAY AGAIN    ', GREEN, True)
+    draw(screen, btn_2x + 10, btn_2y + 10, btn_size_x - 20,
+         btn_size_y - 20, '       QUIT      ', YELLOW, True)
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
                 terminate()
-                #if btn_1x <= event.pos[0] <= btn_1x + btn_size_x and btn_1y <= event.pos[1] <= btn_1y + btn_size_y:
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if btn_1x <= event.pos[0] <= btn_1x + btn_size_x and btn_1y <= event.pos[1] <= btn_1y + btn_size_y:
                     #pygame.mixer.music.stop()
-                    #return  # начинаем игру
-                #elif btn_2x <= event.pos[0] <= btn_2x + btn_size_x and btn_2y <= event.pos[1] <= btn_2y + btn_size_y:
-                    #terminate()
+                    return  # начинаем игру
+                elif btn_2x <= event.pos[0] <= btn_2x + btn_size_x and btn_2y <= event.pos[1] <= btn_2y + btn_size_y:
+                    terminate()
 
         pygame.display.flip()
         clock.tick(FPS)
@@ -160,7 +237,9 @@ tile_images = {
     'grass': pygame.transform.scale(load_image('grass.png'), (tile_width, tile_height)),
     'ground_stay': pygame.transform.scale(load_image('grassCenter.png'), (tile_width, tile_height)),
     'coin': pygame.transform.scale(load_image('coin.png'), (tile_width, tile_height)),
-    'spikes': pygame.transform.scale(load_image('spikes.png'), (tile_width, tile_height))
+    'spikes': pygame.transform.scale(load_image('spikes.png'), (tile_width, tile_height)),
+    'exit': pygame.transform.scale(load_image('exit.png'), (tile_width, tile_height)),
+    'right': pygame.transform.scale(load_image('signRight.png'), (tile_width, tile_height))
 }
 
 
@@ -267,6 +346,14 @@ class Player(pygame.sprite.Sprite):
 
         for i in spikes_group:
             if pygame.sprite.collide_rect(self, i):
+                pygame.mixer.music.pause()
+                dead.play(loops=0)
+                dead_screen()
+
+        for i in finish_group:
+            if pygame.sprite.collide_rect(self, i):
+                pygame.mixer.music.pause()
+                finish.play(loops=0)
                 finish_screen()
 
     # Анимация
@@ -311,6 +398,8 @@ class Tile(pygame.sprite.Sprite):
             self.add(coin_group)
         if tile_type == 'spikes':
             self.add(spikes_group)
+        if tile_type == 'exit':
+            self.add(finish_group)
 
 
 class Camera:
@@ -347,6 +436,10 @@ def generate_level(level):
                 Tile('coin', x, y)
             elif level[y][x] == '!':
                 Tile('spikes', x, y)
+            elif level[y][x] == 'E':
+                Tile('exit', x, y)
+            elif level[y][x] == '>':
+                Tile('right', x, y)
             elif level[y][x] == '@':
                 new_player = Player(load_image("mario.png"), 20, 1, (tile_width * x, tile_width * y))
 
@@ -360,6 +453,7 @@ tiles_group = pygame.sprite.Group()
 player_group = pygame.sprite.Group()
 all_sprites = pygame.sprite.Group()
 spikes_group = pygame.sprite.Group()
+finish_group = pygame.sprite.Group()
 
 player = None
 
@@ -384,9 +478,12 @@ jump = pygame.mixer.Sound('music/jump_3.ogg')
 jump.set_volume(volue / 4)
 coin = pygame.mixer.Sound('music/coin.mp3')
 coin.set_volume(volue)
+dead = pygame.mixer.Sound('music/carumba.ogg')
+lose = pygame.mixer.Sound('music/lose_game.ogg')
+finish = pygame.mixer.Sound('music/finish_game.ogg')
+end = pygame.mixer.Sound('music/end_game.ogg')
 
 total = Output(screen, 0, 0, 20, 20)
-
 
 while running:
     clock.tick(FPS)
