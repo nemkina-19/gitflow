@@ -59,9 +59,9 @@ def finish_screen():
 
     end.play(loops=0)
 
-    intro_text = [f"Вы собрали {COINS} из 15 монет!"]
+    intro_text = [f"Вы собрали {COINS} из 20 монет!"]
     font = pygame.font.SysFont('arial', 30)
-    text_coord = 150
+    text_coord = 500
     for line in intro_text:
         string_rendered = font.render(line, 1, RED)
         intro_rect = string_rendered.get_rect()
@@ -228,7 +228,8 @@ tile_images = {
     'spikes': pygame.transform.scale(load_image('spikes.png'), (tile_width, tile_height)),
     'checkpoint': pygame.transform.scale(load_image('checkpoint.png'), (tile_width, tile_height)),
     'exit': pygame.transform.scale(load_image('exit.png'), (tile_width, tile_height)),
-    'right': pygame.transform.scale(load_image('signRight.png'), (tile_width, tile_height))
+    'right': pygame.transform.scale(load_image('signRight.png'), (tile_width, tile_height)),
+    'ghost': pygame.transform.scale(load_image('sand_lol.png'), (tile_width, tile_height))
 }
 
 
@@ -356,6 +357,9 @@ class Player(pygame.sprite.Sprite):
                 self.rect.x = LAST.rect.x
                 self.rect.y = LAST.rect.y
 
+        for i in ghost_group:
+            if pygame.sprite.collide_rect(self, i):
+                i.kill()
 
     def die(self):
         self.rect.x = LAST.rect.x
@@ -414,6 +418,8 @@ class Tile(pygame.sprite.Sprite):
             self.add(check_group)
         if tile_type == 'exit':
             self.add(finish_group)
+        if tile_type == 'ghost':
+            self.add(ghost_group)
 
 
 class Camera:
@@ -456,6 +462,8 @@ def generate_level(level):
                 Tile('right', x, y)
             elif level[y][x] == 'E':
                 Tile('exit', x, y)
+            elif level[y][x] == '+':
+                Tile('ghost', x, y)
 
     # вернем игрока, а также размер поля в клетках
     return new_player, x, y
@@ -469,6 +477,7 @@ all_sprites = pygame.sprite.Group()
 spikes_group = pygame.sprite.Group()
 check_group = pygame.sprite.Group()
 finish_group = pygame.sprite.Group()
+ghost_group = pygame.sprite.Group()
 
 player = None
 
@@ -494,9 +503,9 @@ jump.set_volume(volue / 4)
 coin = pygame.mixer.Sound('music/coin.mp3')
 coin.set_volume(volue)
 dead = pygame.mixer.Sound('music/carumba.ogg')
-lose = pygame.mixer.Sound('music/lose_game.ogg')
+lose = pygame.mixer.Sound('music/smert.ogg')
 finish = pygame.mixer.Sound('music/finish_game.ogg')
-end = pygame.mixer.Sound('music/end_game.ogg')
+end = pygame.mixer.Sound('music/fanfara.ogg')
 
 
 total = Output(screen, 0, 0, 20, 20)
