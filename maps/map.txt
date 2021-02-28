@@ -5,10 +5,10 @@ b                                                                               
 b                                                                                                               -..........-                      $ -                                               \
 b                                                                              !!     $                         -..........-                        -                                               \
 b                                                                             bbbbbbbbbbbbb                     -..........-      b         bbbbbbbb-                                               \
-b                                                                             b                bbb            $ ------------                                                                        \
-b                                                                         b   b                       bbb       ++++++++++++           bb                                                           \
-b                                 $                                   b       b                                 ------------                  bbb                                                   \
-b                                bbb                bbbbbbbbbbbbbbbbbbbbbbbbbbb              *******************-..........-       b                               $$    E    $                      \
+b                                                                             b                bbb            $ ------------                                                     -                  \
+b                                                                         b   b                       bbb       ++++++++++++           bb                                        -                  \
+b                                 $                                   b       b                                 ------------                  bbb                                -                  \
+b                                bbb                bbbbbbbbbbbbbbbbbbbbbbbbbbb              *******************-..........-       b                               $$     E    $ -                     \
 b                                                              c                           bb..............................-                        bb****************************                  \
 b                         bbb                    b             c                      bbb     -.......................------bbbbb                     -                                             \
 b                                                              c                    b         -.......................-     $                         -                                             \

@@ -54,29 +54,30 @@ def draw(screen, x, y, btn_size_x, btn_size_y, text='', color=None, options=Fals
 
 
 def finish_screen():
-    fon = pygame.transform.scale(load_image('win.jpg'), (WIDTH, HEIGHT))
+    fon = pygame.transform.scale(load_image('img.png'), (WIDTH, HEIGHT))
     screen.blit(fon, (0, 0))
 
     end.play(loops=0)
 
     intro_text = [f"Вы собрали {COINS} из 20 монет!"]
-    font = pygame.font.SysFont('arial', 30)
-    text_coord = 500
+    font = pygame.font.SysFont('arial', 45)
+    text_coord = 50
     for line in intro_text:
-        string_rendered = font.render(line, 1, RED)
+        string_rendered = font.render(line, 1, BLUE)
         intro_rect = string_rendered.get_rect()
         text_coord += 10
         intro_rect.top = text_coord
-        intro_rect.x = 10
+        intro_rect.x = 410
+        intro_rect.y = 90
         text_coord += intro_rect.height
         screen.blit(string_rendered, intro_rect)
 
-    btn_1x = 0.6 * WIDTH
-    btn_1y = HEIGHT * 0.4
+    btn_1x = 0.55 * WIDTH
+    btn_1y = HEIGHT * 0.6
     btn_size_x = WIDTH * 0.125
     btn_size_y = HEIGHT * 0.1
     btn_2x = 0.3 * WIDTH
-    btn_2y = HEIGHT * 0.4
+    btn_2y = HEIGHT * 0.6
 
     draw(screen, btn_1x, btn_1y,
          btn_size_x, btn_size_y, '', BLUE)
