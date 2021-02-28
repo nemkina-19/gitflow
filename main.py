@@ -343,7 +343,7 @@ class Player(pygame.sprite.Sprite):
         for i in check_group:
             if pygame.sprite.collide_rect(self, i):
                 global LAST, START
-                if START != 0:
+                if START == 0:
                     START = i
                 LAST = i
 
@@ -354,8 +354,8 @@ class Player(pygame.sprite.Sprite):
         for i in finish_group:
             if pygame.sprite.collide_rect(self, i):
                 finish_screen()
-                self.rect.x = LAST.rect.x
-                self.rect.y = LAST.rect.y
+                self.rect.x = START.rect.x
+                self.rect.y = START.rect.y
 
         for i in ghost_group:
             if pygame.sprite.collide_rect(self, i):
@@ -497,7 +497,7 @@ player, level_x, level_y = generate_level(load_level('map.txt'))
 volue = 0.3
 pygame.mixer.music.load('music/joy.ogg')
 pygame.mixer.music.play(-1)
-pygame.mixer.music.set_volume(volue)
+pygame.mixer.music.set_volume(volue / 2)
 jump = pygame.mixer.Sound('music/jump_3.ogg')
 jump.set_volume(volue / 4)
 coin = pygame.mixer.Sound('music/coin.mp3')
